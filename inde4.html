@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Zafer'in Şaka Yüz Ölçer Sitesi</title>
+<style>
+  :root {
+    --bg:#061126;
+    --accent:#30cfd0;
+  }
+
+  * {
+    box-sizing:border-box;
+  }
+
+  body {
+    margin:0;
+    min-height:100vh;
+    background:linear-gradient(180deg,#021021,var(--bg));
+    font-family:Inter,system-ui,Arial;
+    color:var(--accent);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+
+  .wrap {
+    max-width:900px;
+    width:100%;
+    background:rgba(255,255,255,0.03);
+    padding:18px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.6);
+  }
+
+  h1 {
+    margin:0 0 6px;
+    font-size:24px;
+    text-align:center;
+    color:#4dd0e1;
+  }
+
+  h2 {
+    margin:0 0 18px;
+    font-size:16px;
+    text-align:center;
+    color:#bce8f0;
+    font-weight:normal;
+  }
+
+  p {
+    margin:0 0 12px;
+    color:#bfe8e9;
+    text-align:center;
+  }
+
+  .controls {
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:center;
+    margin-bottom:12px;
+  }
+
+  input[type=file] {
+    color:var(--accent);
+    max-width:180px;
+  }
+
+  button {
+    background:var(--accent);
+    color:#012;
+    border:none;
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+
+  select {
+    padding:6px;
+    border-radius:6px;
+    border:none;
+    background:rgba(255,255,255,0.03);
+    color:var(--accent);
+  }
+
+  .stage {
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    align-items:flex-start;
+    justify-content:center;
+  }
+
+  canvas {
+    background:#071020;
+    border-radius:8px;
+    width:100%;
+    max-width:480px;
+    height:auto;
+  }
+
+  #results {
+    flex:1;
+    min-width:200px;
+  }
+
+  .resultItem {
+    background:rgba(255,255,255,0.03);
+    padding:8px;
+    border-radius:8px;
+    margin-bottom:8px;
+    color:#dff7f6;
+  }
+
+  .disclaimer {
+    font-size:12px;
+    color:#b6d9d8;
+    margin-top:10px;
+    text-align:center;
+  }
+
+  .tag {
+    display:inline-block;
+    padding:6px 8px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.05);
+    color:#bde;
+  }
+
+  /* 📱 Mobil uyumluluk */
+  @media (max-width:600px) {
+    h1 { font-size:20px; }
+    h2 { font-size:14px; }
+    p { font-size:13px; }
+    .controls {
+      flex-direction:column;
+      align-items:stretch;
+    }
+    input[type=file],
+    button,
+    select {
+      width:100%;
+      text-align:center;
+    }
+    .stage {
+      flex-direction:column;
+      align-items:center;
+    }
+    #results {
+      width:100%;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Zafer'in Şaka Yüz Ölçer Sitesi</h1>
+    <h2>Ben <strong>Zafer</strong>, bu siteyi <strong>Serhat öğretmenim</strong> için yaptım ❤️</h2>
+    <p>Fotoğraftaki yüzleri algılar ve <strong>şaka amaçlı</strong> rastgele bir yüzde atar.<br>
+    Renk: düşük → yeşil 💚 | orta → sarı 💛 | yüksek → kırmızı ❤️</p>
+
+    <div class="controls">
+      <input id="fileInput" type="file" accept="image/*" />
+      <button id="analyzeBtn">Analiz Et</button>
+      <label style="display:flex;align-items:center;gap:8px;justify-content:center">
+        Etiket:
+        <select id="labelSelect">
+          <option value="% bot" selected>% bot</option>
+          <option value="% değişik adam">% şaka</option>
+          <option value="% mal">% eğlence</option>
+        </select>
+      </label>
+      <div style="color:#bfe8e9;text-align:center">Destek: <span id="support">kontrol ediliyor...</span></div>
+    </div>
+
+    <div class="stage">
+      <canvas id="canvas"></canvas>
+      <div id="results"></div>
+    </div>
+
+    <div class="disclaimer">
+      <span class="tag">UYARI</span> Bu site sadece şaka içindir 🎉 Gerçek değerlendirme yapmaz.
+    </div>
+  </div>
+
+<script>
+const fileInput = document.getElementById('fileInput');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const canvas = document.getElementById('canvas');
+const resultsDiv = document.getElementById('results');
+const supportSpan = document.getElementById('support');
+const labelSelect = document.getElementById('labelSelect');
+const ctx = canvas.getContext('2d');
+
+const hasFaceDetector = ('FaceDetector' in window);
+supportSpan.textContent = hasFaceDetector ? 'FaceDetector API var' : 'FaceDetector yok — fallback kullanılıyor';
+
+function loadImageFromFile(file){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = (e) => reject(e);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+function drawImageOnCanvas(img){
+  const maxW = 480;
+  const ratio = img.width / img.height;
+  const w = Math.min(maxW, img.width);
+  const h = Math.round(w / ratio);
+  canvas.width = w; canvas.height = h;
+  ctx.clearRect(0,0,w,h);
+  ctx.drawImage(img,0,0,w,h);
+}
+
+async function analyzeWithFaceDetector(img){
+  const detector = new FaceDetector({fastMode:true, maxDetectedFaces:30});
+  drawImageOnCanvas(img);
+  try {
+    const faces = await detector.detect(img);
+    const scaleX = canvas.width / img.width;
+    const scaleY = canvas.height / img.height;
+    return faces.map(f => {
+      const r = f.boundingBox;
+      return { x: r.x * scaleX, y: r.y * scaleY, width: r.width * scaleX, height: r.height * scaleY };
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function fakeDetect(img){
+  drawImageOnCanvas(img);
+  const count = Math.floor(Math.random()*3)+1;
+  const boxes = [];
+  for(let i=0;i<count;i++){
+    boxes.push({
+      x: Math.random()*(canvas.width*0.6),
+      y: Math.random()*(canvas.height*0.6),
+      width: 70 + Math.random()*90,
+      height: 70 + Math.random()*90
+    });
+  }
+  return boxes;
+}
+
+function colorForPercent(p){
+  if(p < 35) return 'rgba(0,255,100,0.9)';
+  if(p < 70) return 'rgba(255,255,0,0.9)';
+  return 'rgba(255,60,60,0.9)';
+}
+
+function playfulPercent(){
+  const r = Math.random();
+  if(r < 0.05) return 100;
+  if(r < 0.15) return Math.floor(80 + Math.random()*20);
+  if(r < 0.5) return Math.floor(30 + Math.random()*50);
+  return Math.floor(Math.random()*30);
+}
+
+analyzeBtn.addEventListener('click', async () => {
+  const f = fileInput.files[0];
+  if(!f){ alert('Önce bir fotoğraf seç.'); return; }
+  analyzeBtn.disabled = true;
+  analyzeBtn.textContent = 'Analiz ediliyor...';
+  resultsDiv.innerHTML = '';
+  try {
+    const img = await loadImageFromFile(f);
+    let boxes = [];
+    if(hasFaceDetector){
+      try { boxes = await analyzeWithFaceDetector(img); }
+      catch { boxes = await fakeDetect(img); }
+    } else boxes = await fakeDetect(img);
+
+    drawImageOnCanvas(img);
+    if(boxes.length === 0) {
+      resultsDiv.innerHTML = '<div class="resultItem">Yüz bulunamadı — başka foto dene.</div>';
+    } else {
+      boxes.forEach((b, i) => {
+        const pct = playfulPercent();
+        const labelText = labelSelect.value.replace('%', pct);
+        const color = colorForPercent(pct);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color;
+        ctx.strokeRect(b.x, b.y, b.width, b.height);
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillStyle = color;
+        ctx.fillText(labelText, b.x, b.y - 6);
+        const el = document.createElement('div');
+        el.className = 'resultItem';
+        el.innerHTML = `<strong>Yüz ${i+1}:</strong> <span style="color:${color}">${labelText}</span>`;
+        resultsDiv.appendChild(el);
+      });
+    }
+  } catch(err) {
+    alert('Hata: ' + (err.message || err));
+  } finally {
+    analyzeBtn.disabled = false;
+    analyzeBtn.textContent = 'Analiz Et';
+  }
+});
+</script>
+</body>
+</html>
