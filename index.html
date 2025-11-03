@@ -6,155 +6,39 @@
 <title>Zafer'in Bot Ölçer Sitesi</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <style>
-  :root {
-    --bg:#061126;
-    --accent:#30cfd0;
-  }
-
-  * {
-    box-sizing:border-box;
-  }
-
+  :root { --bg:#061126; --accent:#30cfd0; }
+  * { box-sizing:border-box; }
   body {
-    margin:0;
-    min-height:100vh;
+    margin:0; min-height:100vh;
     background:linear-gradient(180deg,#021021,var(--bg));
-    font-family:Inter,system-ui,Arial;
-    color:var(--accent);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
+    font-family:Inter,system-ui,Arial; color:var(--accent);
+    display:flex; align-items:center; justify-content:center; padding:20px;
   }
-
   .wrap {
-    max-width:900px;
-    width:100%;
+    max-width:900px; width:100%;
     background:rgba(255,255,255,0.03);
-    padding:18px;
-    border-radius:12px;
+    padding:18px; border-radius:12px;
     box-shadow:0 10px 30px rgba(0,0,0,0.6);
   }
+  h1{margin:0 0 6px;font-size:24px;text-align:center;color:#4dd0e1}
+  h2{margin:0 0 18px;font-size:16px;text-align:center;color:#bce8f0;font-weight:normal}
+  p{margin:0 0 12px;color:#bfe8e9;text-align:center}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;margin-bottom:12px}
+  input[type=file]{color:var(--accent);max-width:220px}
+  button{background:var(--accent);color:#012;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;flex-shrink:0}
+  select{padding:6px;border-radius:6px;border:none;background:rgba(255,255,255,0.03);color:var(--accent)}
+  .stage{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;justify-content:center}
+  canvas{background:#071020;border-radius:8px;width:100%;max-width:480px;height:auto}
+  #results{flex:1;min-width:200px}
+  .resultItem{background:rgba(255,255,255,0.03);padding:8px;border-radius:8px;margin-bottom:8px;color:#dff7f6}
+  .disclaimer{font-size:12px;color:#b6d9d8;margin-top:10px;text-align:center}
+  .tag{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.05);color:#bde}
 
-  h1 {
-    margin:0 0 6px;
-    font-size:24px;
-    text-align:center;
-    color:#4dd0e1;
-  }
-
-  h2 {
-    margin:0 0 18px;
-    font-size:16px;
-    text-align:center;
-    color:#bce8f0;
-    font-weight:normal;
-  }
-
-  p {
-    margin:0 0 12px;
-    color:#bfe8e9;
-    text-align:center;
-  }
-
-  .controls {
-    display:flex;
-    flex-wrap:wrap;
-    gap:10px;
-    align-items:center;
-    justify-content:center;
-    margin-bottom:12px;
-  }
-
-  input[type=file] {
-    color:var(--accent);
-    max-width:180px;
-  }
-
-  button {
-    background:var(--accent);
-    color:#012;
-    border:none;
-    padding:8px 12px;
-    border-radius:8px;
-    cursor:pointer;
-    flex-shrink:0;
-  }
-
-  select {
-    padding:6px;
-    border-radius:6px;
-    border:none;
-    background:rgba(255,255,255,0.03);
-    color:var(--accent);
-  }
-
-  .stage {
-    display:flex;
-    flex-wrap:wrap;
-    gap:14px;
-    align-items:flex-start;
-    justify-content:center;
-  }
-
-  canvas {
-    background:#071020;
-    border-radius:8px;
-    width:100%;
-    max-width:480px;
-    height:auto;
-  }
-
-  #results {
-    flex:1;
-    min-width:200px;
-  }
-
-  .resultItem {
-    background:rgba(255,255,255,0.03);
-    padding:8px;
-    border-radius:8px;
-    margin-bottom:8px;
-    color:#dff7f6;
-  }
-
-  .disclaimer {
-    font-size:12px;
-    color:#b6d9d8;
-    margin-top:10px;
-    text-align:center;
-  }
-
-  .tag {
-    display:inline-block;
-    padding:6px 8px;
-    border-radius:999px;
-    background:rgba(255,255,255,0.05);
-    color:#bde;
-  }
-
-  /* 📱 Mobil uyumluluk */
   @media (max-width:600px) {
-    h1 { font-size:20px; }
-    h2 { font-size:14px; }
-    p { font-size:13px; }
-    .controls {
-      flex-direction:column;
-      align-items:stretch;
-    }
-    input[type=file],
-    button,
-    select {
-      width:100%;
-      text-align:center;
-    }
-    .stage {
-      flex-direction:column;
-      align-items:center;
-    }
-    #results {
-      width:100%;
-    }
+    h1{font-size:20px} h2{font-size:14px} p{font-size:13px}
+    .controls{flex-direction:column;align-items:stretch}
+    input[type=file],button,select{width:100%;text-align:center}
+    .stage{flex-direction:column;align-items:center} #results{width:100%}
   }
 </style>
 </head>
@@ -190,6 +74,7 @@
   </div>
 
 <script>
+/* --- Elementler --- */
 const fileInput = document.getElementById('fileInput');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const canvas = document.getElementById('canvas');
@@ -198,9 +83,11 @@ const supportSpan = document.getElementById('support');
 const labelSelect = document.getElementById('labelSelect');
 const ctx = canvas.getContext('2d');
 
+/* --- FaceDetector kontrolü --- */
 const hasFaceDetector = ('FaceDetector' in window);
-supportSpan.textContent = hasFaceDetector ? 'FaceDetector API var' : 'FaceDetector yok — fallback kullanılıyor';
+supportSpan.textContent = hasFaceDetector ? 'FaceDetector API var' : 'FaceDetector yok — fakeDetect kullanılıyor';
 
+/* --- Resim yükleme --- */
 function loadImageFromFile(file){
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -210,16 +97,22 @@ function loadImageFromFile(file){
   });
 }
 
+/* --- Canvas'a çizme (ölçekleme) --- */
 function drawImageOnCanvas(img){
   const maxW = 480;
   const ratio = img.width / img.height;
   const w = Math.min(maxW, img.width);
   const h = Math.round(w / ratio);
-  canvas.width = w; canvas.height = h;
+  // yüksek DPR desteklemek istersen: canvas.width = w * DPR; canvas.height = h * DPR; ve ctx.scale(DPR, DPR)
+  canvas.width = w;
+  canvas.height = h;
   ctx.clearRect(0,0,w,h);
   ctx.drawImage(img,0,0,w,h);
 }
+
+/* --- FaceDetector ile analiz (vardır/yorumu) --- */
 async function analyzeWithFaceDetector(img){
+  // drawImage burada çağrılıyor ki boundingBox koordinatları doğru ölçeklensin
   drawImageOnCanvas(img);
   try {
     if ('FaceDetector' in window) {
@@ -228,13 +121,16 @@ async function analyzeWithFaceDetector(img){
       const scaleX = canvas.width / img.width;
       const scaleY = canvas.height / img.height;
 
+      // shrink ile kutuları biraz daha küçük yapıyoruz (0.85 = %85)
+      const shrink = 0.85;
       return faces.map(f => {
         const r = f.boundingBox;
-        const shrink = 0.85; 
         const newW = r.width * shrink;
         const newH = r.height * shrink;
-        const newX = (r.x + r.width / 2) * scaleX - (newW * scaleX) / 2;
-        const newY = (r.y + r.height / 2) * scaleY - (newH * scaleY) / 2;
+        const cx = r.x + r.width / 2;
+        const cy = r.y + r.height / 2;
+        const newX = cx * scaleX - (newW * scaleX) / 2;
+        const newY = cy * scaleY - (newH * scaleY) / 2;
         return {
           x: newX,
           y: newY,
@@ -243,28 +139,39 @@ async function analyzeWithFaceDetector(img){
         };
       });
     } else {
-  
+      // FaceDetector yoksa fallback
+      return await fakeDetect(img);
+    }
+  } catch (e) {
+    console.warn("analyzeWithFaceDetector hatası:", e);
+    return await fakeDetect(img);
+  }
+}
+
+/* --- Basit fallback: rastgele kutular (FaceDetector yoksa) --- */
 async function fakeDetect(img){
   drawImageOnCanvas(img);
-  const count = Math.floor(Math.random()*3)+1;
+  const count = Math.floor(Math.random() * 3) + 1;
   const boxes = [];
-  for(let i=0;i<count;i++){
+  for(let i = 0; i < count; i++){
     boxes.push({
-      x: Math.random()*(canvas.width*0.6),
-      y: Math.random()*(canvas.height*0.6),
-      width: 70 + Math.random()*90,
-      height: 70 + Math.random()*90
+      x: Math.random() * (canvas.width * 0.6),
+      y: Math.random() * (canvas.height * 0.6),
+      width: 70 + Math.random() * 90,
+      height: 70 + Math.random() * 90
     });
   }
   return boxes;
 }
 
+/* --- Renk seçimi --- */
 function colorForPercent(p){
   if(p < 35) return 'rgba(0,255,100,0.9)';
   if(p < 70) return 'rgba(255,255,0,0.9)';
   return 'rgba(255,60,60,0.9)';
 }
 
+/* --- Eğlencelik yüzde üretimi --- */
 function playfulPercent(){
   const r = Math.random();
   if(r < 0.05) return 100;
@@ -273,21 +180,29 @@ function playfulPercent(){
   return Math.floor(Math.random()*30);
 }
 
+/* --- Buton olay dinleyicisi --- */
 analyzeBtn.addEventListener('click', async () => {
   const f = fileInput.files[0];
   if(!f){ alert('Önce bir fotoğraf seç.'); return; }
+
   analyzeBtn.disabled = true;
   analyzeBtn.textContent = 'Analiz ediliyor...';
   resultsDiv.innerHTML = '';
+
   try {
     const img = await loadImageFromFile(f);
     let boxes = [];
-    if(hasFaceDetector){
-      try { boxes = await analyzeWithFaceDetector(img); }
-      catch { boxes = await fakeDetect(img); }
-    } else boxes = await fakeDetect(img);
 
+    try {
+      boxes = await analyzeWithFaceDetector(img);
+    } catch (e) {
+      console.warn('analyzeWithFaceDetector içinde hata:', e);
+      boxes = await fakeDetect(img);
+    }
+
+    // Resmi tekrar çiz (analyzeWithFaceDetector içinde çizilmiş olabilir ama güvenlik)
     drawImageOnCanvas(img);
+
     if(boxes.length === 0) {
       resultsDiv.innerHTML = '<div class="resultItem">Yüz bulunamadı — başka foto dene.</div>';
     } else {
@@ -295,12 +210,21 @@ analyzeBtn.addEventListener('click', async () => {
         const pct = playfulPercent();
         const labelText = labelSelect.value.replace('%', pct);
         const color = colorForPercent(pct);
+
+        // Çerçeveyi çiz
         ctx.lineWidth = 3;
         ctx.strokeStyle = color;
         ctx.strokeRect(b.x, b.y, b.width, b.height);
+
+        // Metni çiz (metin overflow olmasın diye sınırla)
         ctx.font = 'bold 14px sans-serif';
+        ctx.textBaseline = 'bottom';
         ctx.fillStyle = color;
-        ctx.fillText(labelText, b.x, b.y - 6);
+        const textX = Math.max(4, b.x);
+        const textY = Math.max(14, b.y - 6);
+        ctx.fillText(labelText, textX, textY);
+
+        // Sonuç kutusuna yaz
         const el = document.createElement('div');
         el.className = 'resultItem';
         el.innerHTML = `<strong>Yüz ${i+1}:</strong> <span style="color:${color}">${labelText}</span>`;
@@ -317,8 +241,3 @@ analyzeBtn.addEventListener('click', async () => {
 </script>
 </body>
 </html>
-
-
-
-
-
