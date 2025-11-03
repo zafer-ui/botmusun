@@ -219,50 +219,31 @@ function drawImageOnCanvas(img){
   ctx.clearRect(0,0,w,h);
   ctx.drawImage(img,0,0,w,h);
 }
-
 async function analyzeWithFaceDetector(img){
-  const detector = new FaceDetector({ fastMode: false, maxDetectedFaces: 20 });
   drawImageOnCanvas(img);
   try {
-    const faces = await detector.detect(img);
-    const scaleX = canvas.width / img.width;
-    const scaleY = canvas.height / img.height;
+    if ('FaceDetector' in window) {
+      const detector = new FaceDetector({ fastMode: false, maxDetectedFaces: 20 });
+      const faces = await detector.detect(img);
+      const scaleX = canvas.width / img.width;
+      const scaleY = canvas.height / img.height;
 
-    // 🔍 Daha hassas ve küçük kutular için:
-    return faces.map(f => {
-      const r = f.boundingBox;
-      const shrink = 0.85; // kutu boyutunu %85'e düşür
-      const newW = r.width * shrink;
-      const newH = r.height * shrink;
-      const newX = (r.x + r.width / 2) * scaleX - (newW * scaleX) / 2;
-      const newY = (r.y + r.height / 2) * scaleY - (newH * scaleY) / 2;
-      return {
-        x: newX,
-        y: newY,
-        width: newW * scaleX,
-        height: newH * scaleY
-      };
-    });
-  } catch (e) {
-    console.warn("FaceDetector hatası:", e);
-    return [];
-  }
-}
-  const detector = new FaceDetector({fastMode:true, maxDetectedFaces:30});
-  drawImageOnCanvas(img);
-  try {
-    const faces = await detector.detect(img);
-    const scaleX = canvas.width / img.width;
-    const scaleY = canvas.height / img.height;
-    return faces.map(f => {
-      const r = f.boundingBox;
-      return { x: r.x * scaleX, y: r.y * scaleY, width: r.width * scaleX, height: r.height * scaleY };
-    });
-  } catch {
-    return [];
-  }
-}
-
+      return faces.map(f => {
+        const r = f.boundingBox;
+        const shrink = 0.85; 
+        const newW = r.width * shrink;
+        const newH = r.height * shrink;
+        const newX = (r.x + r.width / 2) * scaleX - (newW * scaleX) / 2;
+        const newY = (r.y + r.height / 2) * scaleY - (newH * scaleY) / 2;
+        return {
+          x: newX,
+          y: newY,
+          width: newW * scaleX,
+          height: newH * scaleY
+        };
+      });
+    } else {
+  
 async function fakeDetect(img){
   drawImageOnCanvas(img);
   const count = Math.floor(Math.random()*3)+1;
@@ -336,6 +317,7 @@ analyzeBtn.addEventListener('click', async () => {
 </script>
 </body>
 </html>
+
 
 
 
