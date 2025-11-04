@@ -74,8 +74,9 @@
     </div>
   </div>
 
+  
 <script>
-/* --- Elementler --- */
+/* ELEMENTLER */
 const fileInput = document.getElementById('fileInput');
 const analyzeBtn = document.getElementById('analyzeBtn');
 const canvas = document.getElementById('canvas');
@@ -84,72 +85,30 @@ const supportSpan = document.getElementById('support');
 const labelSelect = document.getElementById('labelSelect');
 const ctx = canvas.getContext('2d');
 
-/* --- FaceDetector kontrolü --- */
-const hasFaceDetector = ('FaceDetector' in window);
-supportSpan.textContent = hasFaceDetector ? 'FaceDetector API var' : 'FaceDetector yok — fakeDetect kullanılıyor';
-
-/* --- Resim yükleme --- */
+/* yardımcı: resmi yükle */
 function loadImageFromFile(file){
   return new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = (e) => reject(e);
     img.src = URL.createObjectURL(file);
   });
 }
 
-/* --- Canvas'a çizme (ölçekleme) --- */
+/* canvas'a uygun ölçekte çiz */
 function drawImageOnCanvas(img){
   const maxW = 480;
   const ratio = img.width / img.height;
   const w = Math.min(maxW, img.width);
   const h = Math.round(w / ratio);
-  // yüksek DPR desteklemek istersen: canvas.width = w * DPR; canvas.height = h * DPR; ve ctx.scale(DPR, DPR)
   canvas.width = w;
   canvas.height = h;
   ctx.clearRect(0,0,w,h);
   ctx.drawImage(img,0,0,w,h);
 }
 
-/* --- FaceDetector ile analiz (vardır/yorumu) --- */
-async function analyzeWithFaceDetector(img){
-  // drawImage burada çağrılıyor ki boundingBox koordinatları doğru ölçeklensin
-  drawImageOnCanvas(img);
-  try {
-    if ('FaceDetector' in window) {
-      const detector = new FaceDetector({ fastMode: false, maxDetectedFaces: 20 });
-      const faces = await detector.detect(img);
-      const scaleX = canvas.width / img.width;
-      const scaleY = canvas.height / img.height;
-
-      // shrink ile kutuları biraz daha küçük yapıyoruz (0.85 = %85)
-      const shrink = 0.85;
-      return faces.map(f => {
-        const r = f.boundingBox;
-        const newW = r.width * shrink;
-        const newH = r.height * shrink;
-        const cx = r.x + r.width / 2;
-        const cy = r.y + r.height / 2;
-        const newX = cx * scaleX - (newW * scaleX) / 2;
-        const newY = cy * scaleY - (newH * scaleY) / 2;
-        return {
-          x: newX,
-          y: newY,
-          width: newW * scaleX,
-          height: newH * scaleY
-        };
-      });
-    } else {
-      // FaceDetector yoksa fallback
-      return await fakeDetect(img);
-    }
-  } catch (e) {
-    console.warn("analyzeWithFaceDetector hatası:", e);
-    return await fakeDetect(img);
-  }
-}
-
-/* --- Basit fallback: rastgele kutular (FaceDetector yoksa) --- */
+/* fake fallback (her zaman bazı kutular üretir) */
 async function fakeDetect(img){
   drawImageOnCanvas(img);
   const count = Math.floor(Math.random() * 3) + 1;
@@ -165,14 +124,12 @@ async function fakeDetect(img){
   return boxes;
 }
 
-/* --- Renk seçimi --- */
+/* renk + yüzde üretimi */
 function colorForPercent(p){
   if(p < 35) return 'rgba(0,255,100,0.9)';
   if(p < 70) return 'rgba(255,255,0,0.9)';
   return 'rgba(255,60,60,0.9)';
 }
-
-/* --- Eğlencelik yüzde üretimi --- */
 function playfulPercent(){
   const r = Math.random();
   if(r < 0.05) return 100;
@@ -181,7 +138,55 @@ function playfulPercent(){
   return Math.floor(Math.random()*30);
 }
 
-/* --- Buton olay dinleyicisi --- */
+/* --- face-api.js ile model yükleme (hazır host kullanılıyor) --- */
+/* kısa yol: modeller hazır hosttan çekiliyor, senin repoya koymana gerek yok */
+let faceApiAvailable = false;
+async function ensureFaceApi(){
+  if (typeof faceapi === 'undefined') {
+    faceApiAvailable = false;
+    supportSpan.textContent = 'face-api.js yüklenmedi — fakeDetect kullanılıyor';
+    return;
+  }
+  try {
+    // HAZIR HOST: modeller burada barınıyor (sen dosya yüklemek zorunda değilsin)
+    const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+    faceApiAvailable = true;
+    supportSpan.textContent = 'face-api.js modelleri yüklendi';
+  } catch (e) {
+    console.warn('Model yükleme hatası:', e);
+    faceApiAvailable = false;
+    supportSpan.textContent = 'face-api modeli yüklenemedi — fakeDetect kullanılıyor';
+  }
+}
+
+async function analyzeWithFaceApi(img){
+  drawImageOnCanvas(img);
+  // tinyFaceDetector seçenekleri: inputSize hız/başarı dengesi, scoreThreshold hassasiyet
+  const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 });
+  const detections = await faceapi.detectAllFaces(img, options);
+  const scaleX = canvas.width / img.width;
+  const scaleY = canvas.height / img.height;
+  const shrink = 0.85;
+
+  return detections.map(d => {
+    const r = d.box;
+    const newW = r.width * shrink;
+    const newH = r.height * shrink;
+    const cx = r.x + r.width / 2;
+    const cy = r.y + r.height / 2;
+    const newX = cx * scaleX - (newW * scaleX) / 2;
+    const newY = cy * scaleY - (newH * scaleY) / 2;
+    return {
+      x: newX,
+      y: newY,
+      width: newW * scaleX,
+      height: newH * scaleY
+    };
+  });
+}
+
+/* --- Ana akış --- */
 analyzeBtn.addEventListener('click', async () => {
   const f = fileInput.files[0];
   if(!f){ alert('Önce bir fotoğraf seç.'); return; }
@@ -192,32 +197,43 @@ analyzeBtn.addEventListener('click', async () => {
 
   try {
     const img = await loadImageFromFile(f);
+
+    // modelleri bir kez yükle
+    if (!window.faceApiInitDone) {
+      await ensureFaceApi();
+      window.faceApiInitDone = true;
+    }
+
     let boxes = [];
 
-    try {
-      boxes = await analyzeWithFaceDetector(img);
-    } catch (e) {
-      console.warn('analyzeWithFaceDetector içinde hata:', e);
+    if (faceApiAvailable) {
+      try {
+        boxes = await analyzeWithFaceApi(img);
+      } catch (e) {
+        console.warn('face-api ile tespit hatası:', e);
+        boxes = [];
+      }
+    }
+
+    // Eğer face-api yoksa veya boşsa fallback ile kutular üret
+    if (!faceApiAvailable || boxes.length === 0) {
       boxes = await fakeDetect(img);
     }
 
-    // Resmi tekrar çiz (analyzeWithFaceDetector içinde çizilmiş olabilir ama güvenlik)
     drawImageOnCanvas(img);
 
     if(boxes.length === 0) {
       resultsDiv.innerHTML = '<div class="resultItem">Yüz bulunamadı — başka foto dene.</div>';
     } else {
-      boxes.forEach((b, i) => {
+      boxes.forEach((b,i) => {
         const pct = playfulPercent();
         const labelText = labelSelect.value.replace('%', pct);
         const color = colorForPercent(pct);
 
-        // Çerçeveyi çiz
         ctx.lineWidth = 3;
         ctx.strokeStyle = color;
         ctx.strokeRect(b.x, b.y, b.width, b.height);
 
-        // Metni çiz (metin overflow olmasın diye sınırla)
         ctx.font = 'bold 14px sans-serif';
         ctx.textBaseline = 'bottom';
         ctx.fillStyle = color;
@@ -225,7 +241,6 @@ analyzeBtn.addEventListener('click', async () => {
         const textY = Math.max(14, b.y - 6);
         ctx.fillText(labelText, textX, textY);
 
-        // Sonuç kutusuna yaz
         const el = document.createElement('div');
         el.className = 'resultItem';
         el.innerHTML = `<strong>Yüz ${i+1}:</strong> <span style="color:${color}">${labelText}</span>`;
@@ -242,4 +257,5 @@ analyzeBtn.addEventListener('click', async () => {
 </script>
 </body>
 </html>
+
 
