@@ -39,7 +39,13 @@
     .controls{flex-direction:column;align-items:stretch}
     input[type=file],button,select{width:100%;text-align:center}
     .stage{flex-direction:column;align-items:center} #results{width:100%}
-  }
+     }
+  /* 💥 Yüz kutuları için parlama animasyonu */
+@keyframes glow {
+  0% { box-shadow: 0 0 10px rgba(255,0,0,0.3); }
+  50% { box-shadow: 0 0 25px rgba(255,0,0,0.9); }
+  100% { box-shadow: 0 0 10px rgba(255,0,0,0.3); }
+}
 </style>
 <script defer src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
 </head>
@@ -57,8 +63,8 @@
         Etiket:
         <select id="labelSelect">
           <option value="% bot" selected>% bot</option>
-          <option value="% değişik adam">% değişik adam</option>
-          <option value="% mal">% mal</option>
+          <option value="% değişik adam">% şaka</option>
+          <option value="% mal">% eğlence</option>
         </select>
       </label>
       <div style="color:#bfe8e9;text-align:center">Destek: <span id="support">kontrol ediliyor...</span></div>
@@ -225,33 +231,41 @@ analyzeBtn.addEventListener('click', async () => {
     if(boxes.length === 0) {
       resultsDiv.innerHTML = '<div class="resultItem">Yüz bulunamadı — başka foto dene.</div>';
     } else {
-     boxes.forEach((b,i) => {
-  // Renk ve yazı ayarları
-  const color = 'rgba(255,0,0,0.9)';
+      boxes.forEach((b,i) => {
+        const pct = playfulPercent();
+        const labelText = labelSelect.value.replace('%', pct);
+        const color = colorForPercent(pct);
 
-  // 💥 Rastgele yüzde (0–100 arası)
-  const randomPercent = Math.floor(Math.random() * 101); 
-  const labelText = `%${randomPercent} bot`; // örnek: %37 bot
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = color;
+        ctx.strokeRect(b.x, b.y, b.width, b.height);
+        // 💫 Parlayan efekt için HTML div ekle
+const glowBox = document.createElement('div');
+glowBox.style.position = 'absolute';
+glowBox.style.left = `${canvas.offsetLeft + b.x}px`;
+glowBox.style.top = `${canvas.offsetTop + b.y}px`;
+glowBox.style.width = `${b.width}px`;
+glowBox.style.height = `${b.height}px`;
+glowBox.style.border = '2px solid red';
+glowBox.style.borderRadius = '6px';
+glowBox.style.animation = 'glow 1.2s infinite';
+glowBox.style.pointerEvents = 'none';
+glowBox.style.boxShadow = '0 0 15px rgba(255,0,0,0.7)';
+glowBox.className = 'glowBox';
+document.body.appendChild(glowBox);
 
-  // Kare çiz
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = color;
-  ctx.strokeRect(b.x, b.y, b.width, b.height);
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textBaseline = 'bottom';
+        ctx.fillStyle = color;
+        const textX = Math.max(4, b.x);
+        const textY = Math.max(14, b.y - 6);
+        ctx.fillText(labelText, textX, textY);
 
-  // Yazıyı yüzün hemen üstüne çiz
-  ctx.font = 'bold 18px sans-serif';
-  ctx.textBaseline = 'bottom';
-  ctx.fillStyle = color;
-  const textX = b.x + 5;
-  const textY = b.y - 8;
-  ctx.fillText(labelText, textX, textY);
-
-  // Sağ taraftaki listeye de ekle
-  const el = document.createElement('div');
-  el.className = 'resultItem';
-  el.innerHTML = `<strong>Yüz ${i+1}:</strong> <span style="color:${color}">${labelText}</span>`;
-  resultsDiv.appendChild(el);
-     });
+        const el = document.createElement('div');
+        el.className = 'resultItem';
+        el.innerHTML = `<strong>Yüz ${i+1}:</strong> <span style="color:${color}">${labelText}</span>`;
+        resultsDiv.appendChild(el);
+      });
     }
   } catch(err) {
     alert('Hata: ' + (err.message || err));
