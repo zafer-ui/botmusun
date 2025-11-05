@@ -7,6 +7,37 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <style>
   :root { --bg:#061126; --accent:#30cfd0; }
+  /* ☀️ Gündüz modu renkleri */
+body.light {
+  background: linear-gradient(180deg, #dff7ff, #a4d7ff);
+  color: #012;
+}
+body.light .wrap {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+body.light h1 {
+  color: #005f9e;
+}
+body.light h2 {
+  color: #024;
+}
+body.light p,
+body.light .resultItem {
+  color: #024;
+}
+body.light button {
+  background: #007acc;
+  color: white;
+}
+body.light button:hover {
+  background: #005f9e;
+}
+body.light select {
+  background: rgba(0,0,0,0.05);
+  color: #024;
+}
+
   * { box-sizing:border-box; }
   body {
     margin:0; min-height:100vh;
@@ -264,6 +295,7 @@ analyzeBtn.addEventListener('click', async () => {
 </script>
 </body>
 </html>
+
 
 
 
