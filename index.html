@@ -10,9 +10,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <style>
 /* ... CSS kodunuz BURADAN devam etmeli ... */
-<link rel="icon" type="image/png" href="favicon.png">
-<style>
-  :root { --bg:#061126; --accent:#30cfd0; }
+  :root { --bg:#010915; --accent:#30cfd0; }
   /* ☀️ Gündüz modu renkleri */
 body.light {
   background: linear-gradient(180deg, #dff7ff, #a4d7ff);
@@ -45,18 +43,20 @@ body.light select {
 }
 
   * { box-sizing:border-box; }
-  body {
-    margin:0; min-height:100vh;
-    background:linear-gradient(180deg,#021021,var(--bg));
-    font-family:Inter,system-ui,Arial; color:var(--accent);
-    display:flex; align-items:center; justify-content:center; padding:20px;
-  }
+body {
+ margin:0; min-height:100vh;
+ background:linear-gradient(180deg,#000000,var(--bg)); /* SAF SİYAHTAN BAŞLAYAN GRADIENT */
+ font-family:Inter,system-ui,Arial; color:var(--accent);
+ display:flex; align-items:center; justify-content:center; padding:20px;
+ }
   .wrap {
-    max-width:900px; width:100%;
-    background:rgba(255,255,255,0.03);
-    padding:18px; border-radius:12px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.6);
-  }
+ max-width:900px; width:100%;
+ background:rgba(0,0,0,0.5); /* 🌙 YARI ŞEFFAF KOYU SİYAH ZEMİN */
+ backdrop-filter: blur(8px); /* 💥 CAM EFEKTİNİN KALBİ */
+ border: 1px solid rgba(255, 255, 255, 0.1); /* İNCE ÇERÇEVE */
+ padding:18px; border-radius:12px;
+ box-shadow:0 4px 30px rgba(0,0,0,0.8), 0 0 20px var(--accent); /* Daha keskin gölge */
+ }
   h1{margin:0 0 6px;font-size:24px;text-align:center;color:#4dd0e1}
   h2{margin:0 0 18px;font-size:16px;text-align:center;color:#bce8f0;font-weight:normal}
   p{margin:0 0 12px;color:#bfe8e9;text-align:center}
@@ -313,6 +313,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
