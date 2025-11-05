@@ -239,24 +239,6 @@ analyzeBtn.addEventListener('click', async () => {
         ctx.lineWidth = 3;
         ctx.strokeStyle = color;
         ctx.strokeRect(b.x, b.y, b.width, b.height);
-// 💫 Parlayan efekt kutusunu canvas'ın üstüne tam hizalı ekle
-const wrapper = canvas.parentElement; // canvas'ı saran div
-const glowBox = document.createElement('div');
-glowBox.style.position = 'absolute';
-glowBox.style.left = `${b.x}px`;
-glowBox.style.top = `${b.y}px`;
-glowBox.style.width = `${b.width}px`;
-glowBox.style.height = `${b.height}px`;
-glowBox.style.border = '2px solid red';
-glowBox.style.borderRadius = '8px';
-glowBox.style.background = 'rgba(255,0,0,0.08)';
-glowBox.style.animation = 'glow 1.2s infinite';
-glowBox.style.pointerEvents = 'none';
-glowBox.style.boxShadow = '0 0 20px rgba(255,0,0,0.8)';
-glowBox.style.transform = `translate(${canvas.offsetLeft}px, ${canvas.offsetTop}px)`;
-glowBox.className = 'glowBox';
-wrapper.style.position = 'relative';
-wrapper.appendChild(glowBox);
         
         ctx.font = 'bold 14px sans-serif';
         ctx.textBaseline = 'bottom';
@@ -281,6 +263,7 @@ wrapper.appendChild(glowBox);
 </script>
 </body>
 </html>
+
 
 
 
