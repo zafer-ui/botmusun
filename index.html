@@ -271,7 +271,7 @@ analyzeBtn.addEventListener('click', async () => {
     } else {
       boxes.forEach((b,i) => {
         const pct = playfulPercent();
-        const labelText = labelSelect.value.replace('%', pct);
+        const labelText = labelSelect.value.replace('%', '%' + pct);
         const color = colorForPercent(pct);
 
         ctx.lineWidth = 3;
@@ -313,6 +313,7 @@ themeToggle.addEventListener('click', () => {
 </script>
 </body>
 </html>
+
 
 
 
